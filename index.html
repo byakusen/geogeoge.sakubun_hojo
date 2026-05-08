@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>作文サポート（4年生版）</title>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      padding: 20px 0;
+    }
+
+    #app-container {
+      width: 90%;
+      max-width: 600px;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      padding: 30px 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .screen {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .screen.active {
+      display: block;
+      opacity: 1;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 1.6rem;
+      margin-bottom: 15px;
+      line-height: 1.4;
+    }
+    p {
+      color: #555;
+      font-size: 1.05rem;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    /* 質問の補足説明 */
+    .sub-text {
+      font-size: 0.95rem;
+      color: #666;
+      margin-bottom: 15px;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 10px;
+      border-radius: 10px;
+      line-height: 1.5;
+    }
+
+    #progress-container {
+      width: 100%;
+      height: 10px;
+      background-color: rgba(255, 255, 255, 0.5);
+      border-radius: 5px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      display: none;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #ff9a9e;
+      transition: width 0.3s ease;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 15px;
+      font-size: 1.15rem;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.6);
+      color: #333;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      margin-bottom: 15px;
+    }
+    input[type="text"]:focus, textarea:focus {
+      border-color: #ff9a9e;
+      box-shadow: 0 0 10px rgba(255, 154, 158, 0.3);
+      background: rgba(255, 255, 255, 0.9);
+    }
+    
+    textarea {
+      resize: none;
+      height: 100px;
+      line-height: 1.6;
+    }
+
+    #result-text {
+      height: 240px;
+    }
+
+    .shake {
+      animation: shake 0.4s;
+      border-color: #ff6b6b !important;
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+
+    button {
+      background: #ff9a9e;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.15rem;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+      margin: 5px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 154, 158, 0.6);
+      background: #ff8b90;
+    }
+    button:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 10px rgba(255, 154, 158, 0.3);
+    }
+    button.secondary {
+      background: #a1c4fd;
+      box-shadow: 0 4px 15px rgba(161, 196, 253, 0.4);
+    }
+    button.secondary:hover {
+      background: #8ab5f8;
+      box-shadow: 0 6px 20px rgba(161, 196, 253, 0.6);
+    }
+
+    .theme-btn {
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      margin: 0 auto 12px auto;
+      padding: 18px;
+    }
+
+    /* 言葉のたね（短いキーワード用） */
+    button.seed-btn {
+      background: rgba(255, 255, 255, 0.7);
+      color: #555;
+      border: 2px solid rgba(255, 154, 158, 0.5);
+      padding: 8px 14px;
+      font-size: 0.95rem;
+      border-radius: 20px;
+      box-shadow: none;
+      margin: 4px;
+      display: inline-block;
+      font-weight: normal;
+    }
+    button.seed-btn:hover {
+      background: rgba(255, 255, 255, 1);
+      border-color: #ff9a9e;
+      box-shadow: 0 2px 10px rgba(255, 154, 158, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* 書き出しヒント（文の最初だけ用） */
+    button.start-btn {
+      background: rgba(255, 255, 255, 0.7);
+      color: #555;
+      border: 2px dashed rgba(161, 196, 253, 0.7);
+      padding: 8px 14px;
+      font-size: 0.95rem;
+      border-radius: 12px;
+      box-shadow: none;
+      margin: 4px;
+      display: inline-block;
+      font-weight: normal;
+    }
+    button.start-btn:hover {
+      background: rgba(255, 255, 255, 1);
+      border-color: #a1c4fd;
+      box-shadow: 0 2px 10px rgba(161, 196, 253, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .hint-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 5px;
+      text-align: left;
+      padding-left: 5px;
+    }
+
+    .hint-section {
+      margin-bottom: 12px;
+      text-align: left;
+    }
+
+    @media (min-width: 600px) {
+      h1 { font-size: 1.9rem; }
+      p { font-size: 1.2rem; }
+      input[type="text"] { font-size: 1.3rem; padding: 18px; }
+      button { font-size: 1.3rem; padding: 16px 36px; }
+      button.seed-btn, button.start-btn { font-size: 1.05rem; padding: 10px 18px; }
+      .theme-btn { font-size: 1.4rem; }
+      .sub-text { font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+
+    <!-- スタート画面 -->
+    <div id="screen-start" class="screen active">
+      <h1>✨ 作文サポート ✨</h1>
+      <p>しつ問にこたえながら、<br>あなたの「思い」や「考え」を<br>くわしく書いてみよう！</p>
+      <button onclick="showThemeScreen()">はじめる</button>
+    </div>
+
+    <!-- テーマ選択画面 -->
+    <div id="screen-theme" class="screen">
+      <h1>何について書く？</h1>
+      <p>書きたいテーマをえらんでね</p>
+      <div style="margin-bottom: 20px;">
+        <button class="theme-btn" onclick="selectTheme('odekake')">🎒 おでかけ・できごと</button>
+        <button class="theme-btn" onclick="selectTheme('gyouji')">🏫 学校の行事</button>
+        <button class="theme-btn" onclick="selectTheme('dokusho')">📖 読書感想文</button>
+      </div>
+      <button class="secondary" onclick="resetApp()">もどる</button>
+    </div>
+
+    <!-- 質問画面 -->
+    <div id="screen-question" class="screen">
+      <h1 id="question-text">しつ問</h1>
+      <div id="sub-text-container"></div>
+      
+      <div id="seed-section" class="hint-section" style="display:none;">
+        <div class="hint-label">💡 言葉のたね（タップでうつせるよ）</div>
+        <div id="seed-container"></div>
+      </div>
+
+      <div id="start-section" class="hint-section" style="display:none;">
+        <div class="hint-label">✏️ 書き出しのヒント（つづきは自分で考えよう）</div>
+        <div id="start-container"></div>
+      </div>
+
+      <input type="text" id="answer-input" placeholder="ここに自分の言葉で書いてね" autocomplete="off">
+      <br>
+      <div style="display: flex; justify-content: center; gap: 10px;">
+        <button class="secondary" id="back-button" onclick="prevQuestion()" style="display: none; padding: 14px 20px;">もどる</button>
+        <button onclick="nextQuestion()">つぎへ</button>
+      </div>
+    </div>
+
+    <!-- 完成画面 -->
+    <div id="screen-result" class="screen">
+      <h1>🎉 作文かんせい！ 🎉</h1>
+      <p style="font-size: 0.9rem; color: #666; margin-top: -10px; margin-bottom: 15px;">（ここから自分でなおしたり、つけ足したりできるよ）</p>
+      <textarea id="result-text"></textarea>
+      <br>
+      <button onclick="copyText()">コピーする</button>
+      <button class="secondary" onclick="resetApp()">もういちど</button>
+    </div>
+
+  </div>
+
+  <script>
+    const soundCorrect = new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3");
+    const soundError = new Audio("https://assets.mixkit.co/active_storage/sfx/2997/2997-preview.mp3");
+
+    // ============================================================
+    // 文を整えるヘルパー関数群（子どもの入力を自然な文章に近づける）
+    // ============================================================
+    
+    // 文末の処理：
+    //   "。" や "！" などで終わっていなければ、何もしない（呼び出し側で処理）
+    //   余分な「。」が連続していたら1つにする
+    function cleanEnd(s) {
+      if (!s) return s;
+      s = s.trim();
+      s = s.replace(/。+$/, '。');  // 「。。」→「。」
+      s = s.replace(/、$/, '');     // 末尾の読点は消す
+      return s;
+    }
+
+    // 文末が「。」「！」「？」で終わっているか
+    function endsWithPeriod(s) {
+      if (!s) return false;
+      return /[。！？!?]$/.test(s.trim());
+    }
+
+    // 中黒（・）を自然な文章に変換
+    //   「日曜日に・家ぞくと・海へ」→「日曜日に、家ぞくと、海へ」
+    function convertNakaguro(s) {
+      if (!s) return s;
+      // 言葉のたねで「・」が入っている場合、読点に変える
+      return s.replace(/・/g, '、');
+    }
+
+    // 「いつ・だれと・どこへ」の答えを「〜行きました。」の形にする
+    function fixWhenWhoWhere(s) {
+      if (!s) return s;
+      s = convertNakaguro(s).trim();
+      s = s.replace(/、$/, '');
+      // すでに「ました」「です」などで終わっていればそのまま
+      if (/(ました|でした|です|ます)。?$/.test(s)) {
+        return endsWithPeriod(s) ? s : s + '。';
+      }
+      // 「〜へ」「〜に」で終わっていたら「行きました。」を足す
+      if (/[へに]$/.test(s)) {
+        return s + '行きました。';
+      }
+      // それ以外は「。」だけつける
+      return endsWithPeriod(s) ? s : s + '。';
+    }
+
+    // 「いちばん心にのこったのは、〜」の続きを「〜ことです。」の形にする
+    //   「海の様子がきらきらしていた」→「海の様子がきらきらしていたことです。」
+    //   「みんなで協力したこと」→「みんなで協力したことです。」（重複させない）
+    //   「ゴールしたとき」→「ゴールしたときのことです。」
+    //   「ブランコであそびました」→「ブランコであそんだことです。」（敬体→常体）
+    function fixCenter(s) {
+      if (!s) return s;
+      s = s.trim();
+      s = s.replace(/。+$/, '');  // 末尾の「。」を一旦取る
+      s = s.replace(/、$/, '');
+      
+      // すでに「ことです」「ことでした」で終わっている
+      if (/ことです$|ことでした$/.test(s)) {
+        return s + '。';
+      }
+      // 「こと」で終わっている → 「です。」を足す
+      if (/こと$/.test(s)) {
+        return s + 'です。';
+      }
+      // 「とき」「ところ」「場面」で終わっている → 「のことです。」を足す
+      if (/(とき|ところ|場面|シーン)$/.test(s)) {
+        return s + 'のことです。';
+      }
+      
+      // 敬体（〜ました／〜ます／〜です／〜でした）で終わっている場合は
+      // 常体（普通形）に直してから「ことです。」を足す
+      // 例: 「あそびました」→「あそんだ」、「行きました」→「行った」
+      const keitaiToJotai = convertKeitaiToJotai(s);
+      if (keitaiToJotai !== null) {
+        return keitaiToJotai + 'ことです。';
+      }
+      
+      // 過去形・連体形で終わっている（〜た、〜だ、〜していた、〜だった等）
+      //   →「ことです。」を足す
+      if (/(た|だ|ていた|でいた)$/.test(s)) {
+        return s + 'ことです。';
+      }
+      // それ以外（名詞などで終わっている）→「です。」
+      return s + 'です。';
+    }
+
+    // 敬体（〜ました等）を常体（〜た等）に変換する
+    //   主に「〜ことです」の前で使う処理
+    //   変換できなければ null を返す
+    function convertKeitaiToJotai(s) {
+      if (!s) return null;
+      
+      // 「〜かったです」（イ形容詞の丁寧形）→「〜かった」
+      // 例: 楽しかったです → 楽しかった、おもしろかったです → おもしろかった
+      if (/かったです$/.test(s)) {
+        return s.replace(/かったです$/, 'かった');
+      }
+      
+      // 「〜でした」→「〜だった」
+      // 例: 元気でした → 元気だった
+      if (/でした$/.test(s)) {
+        return s.replace(/でした$/, 'だった');
+      }
+      
+      // 五段動詞の「〜ました」→ 音便を考慮した過去形
+      // 「い」「き」「ぎ」→「い」音便  例: うたいました→うたった、行きました→行った、およぎました→およいだ
+      //   ※ 「い」段は「い」音便で「った」になる（うたう→うたった）
+      // 「し」→ そのまま「し」+ た       例: はなしました→はなした
+      // 「ち」「り」→「っ」音便           例: もちました→もった、はしりました→はしった
+      // 「に」「び」「み」→「ん」音便    例: しにました→しんだ、あそびました→あそんだ
+      const matchMashita = s.match(/(.+?)([いきぎしちにびみり])ました$/);
+      if (matchMashita) {
+        const stem = matchMashita[1];
+        const lastChar = matchMashita[2];
+        if (lastChar === 'い') return stem + 'った';   // うたいました→うたった
+        if (lastChar === 'き') return stem + 'いた';   // 行きました→行った
+        if (lastChar === 'ぎ') return stem + 'いだ';   // およぎました→およいだ
+        if (lastChar === 'し') return stem + 'した';   // はなしました→はなした
+        if (lastChar === 'ち') return stem + 'った';   // もちました→もった
+        if (lastChar === 'り') return stem + 'った';   // はしりました→はしった
+        if (lastChar === 'に') return stem + 'んだ';   // しにました→しんだ
+        if (lastChar === 'び') return stem + 'んだ';   // あそびました→あそんだ
+        if (lastChar === 'み') return stem + 'んだ';   // よみました→よんだ
+      }
+      
+      // 一段動詞・サ変動詞・カ変動詞などの「〜ました」→「〜た」
+      // 例: 食べました→食べた、見ました→見た、しました→した、来ました→来た
+      if (/ました$/.test(s)) {
+        return s.replace(/ました$/, 'た');
+      }
+      
+      // 「〜です」→「〜だ」（イ形容詞の「〜いです」も含む）
+      // 例: 学生です→学生だ、楽しいです→楽しい（だは付けない方が自然）
+      // ただし「〜いです」は本来正しくない表現なので、「です」だけ取る
+      if (/いです$/.test(s)) {
+        return s.replace(/いです$/, 'い');
+      }
+      if (/です$/.test(s)) {
+        return s.replace(/です$/, 'だ');
+      }
+      
+      return null;  // 変換できなかった
+    }
+
+    // 一般的な文の末尾整形（描写文など）
+    //   末尾に句点がなければつける
+    function fixSentenceEnd(s) {
+      if (!s) return s;
+      s = convertNakaguro(s).trim();
+      s = s.replace(/、$/, '');
+      if (endsWithPeriod(s)) return s;
+      // 「〜から」「〜ので」で終わっている場合は「です」を補う（中途半端な文を防ぐ）
+      if (/から$/.test(s)) {
+        return s + 'です。';
+      }
+      if (/ので$/.test(s)) {
+        // 「〜ので」→「〜のでした。」だと不自然なので、ここは「。」だけにして
+        // 子どもが見直したときに自分で直せるようにする
+        return s + '。';
+      }
+      return s + '。';
+    }
+
+    // 気持ちの言葉を整える（後ろに「と思いました」等が付く前提）
+    //   「ドキドキした」→「ドキドキした」（そのまま）
+    //   「うれしい・楽しい」→「うれしい、楽しい」
+    //   「かわいそうだなと思いました」→「かわいそうだな」（後ろの「思いました」と重複するため除去）
+    function fixFeel(s) {
+      if (!s) return s;
+      s = s.trim();
+      s = s.replace(/。+$/, '');
+      // 「・」で複数つながっている場合は読点に
+      if (s.includes('・')) {
+        s = s.replace(/・/g, '、');
+      }
+      // 後ろに「と思いました」「と感じました」「という気もちになりました」が付くので、
+      // すでに同じ表現が入っていたら除去する
+      // 例：「かわいそうだなと思いました」→「かわいそうだな」
+      s = s.replace(/と思いました$/, '');
+      s = s.replace(/と思った$/, '');
+      s = s.replace(/と感じました$/, '');
+      s = s.replace(/と感じた$/, '');
+      s = s.replace(/という気もちになりました$/, '');
+      s = s.replace(/という気持ちになりました$/, '');
+      s = s.replace(/気もちになりました$/, '');
+      s = s.replace(/気持ちになりました$/, '');
+      // 末尾の「、」も再度クリーンアップ
+      s = s.replace(/、$/, '');
+      return s;
+    }
+
+    // 「なぜなら」などで始まる理由文を整える
+    //   「はじめて見た海だったから」→「はじめて見た海だったからです。」
+    //   「ぜなら、〜」→「なぜなら、〜」（「な」が誤って消えた場合の補正）
+    function fixReason(s) {
+      if (!s) return s;
+      s = s.trim();
+      s = s.replace(/。+$/, '');
+      s = s.replace(/、$/, '');
+      
+      // 「ぜなら」で始まっていたら「なぜなら」に補正
+      if (/^ぜなら/.test(s)) {
+        s = 'な' + s;
+      }
+      
+      if (endsWithPeriod(s)) return s;
+      
+      // 「から」で終わる → 「です。」をつける
+      if (/から$/.test(s)) {
+        return s + 'です。';
+      }
+      // 「ので」で終わる → 「。」だけ（「のでです」になるのを防ぐ）
+      if (/ので$/.test(s)) {
+        return s + '。';
+      }
+      // 「〜です」「〜ます」で終わっている
+      if (/(です|ます|でした|ました)$/.test(s)) {
+        return s + '。';
+      }
+      return s + '。';
+    }
+
+    // ============================================================
+    // テーマごとの質問データ（4年生向け・思いや考えを引き出す設計）
+    // ============================================================
+    // 質問の type:
+    //   "fact"   → 事実を聞く（簡潔に）
+    //   "feel"   → 気持ちを「言葉のたね」で引き出す
+    //   "deep"   → 「書き出し」だけ示して、自分の言葉で続けさせる
+    //   "free"   → ヒントなしで自分で考える
+    // ============================================================
+    const themeData = {
+      odekake: {
+        title: "おでかけ・できごと",
+        questions: [
+          {
+            key: "when_who_where",
+            type: "fact",
+            q: "いつ・だれと・どこへ行った？",
+            sub: "まとめて1つの文で書こう。例：「日曜日に家ぞくと公園へ行きました。」",
+            seeds: ["日曜日に", "夏休みに", "家ぞくと", "友だちと", "公園へ", "海へ"]
+          },
+          {
+            key: "center",
+            type: "free",
+            q: "その日、いちばん心にのこったことは何？",
+            sub: "全部書こうとしないで、1つだけえらぼう。それが作文の「中心」になります。"
+          },
+          {
+            key: "kuwashiku",
+            type: "deep",
+            q: "そのときのようすを、もっとくわしく書こう",
+            sub: "目で見たもの、聞こえた音、においなど。読む人がそうぞうできるように。",
+            starts: ["そのとき、", "見ると、", "わたしの目の前には、", "○○の音が聞こえて、"]
+          },
+          {
+            key: "feel",
+            type: "feel",
+            q: "そのとき、どんな気もちだった？",
+            sub: "「楽しかった」だけじゃなくて、もっとぴったりの言葉をさがしてみよう。",
+            seeds: ["うれしい", "楽しい", "ドキドキした", "びっくりした", "こわかった", "くやしい", "ほっとした", "むねがあつくなった", "むちゅうになった", "じーんとした"]
+          },
+          {
+            key: "why_feel",
+            type: "deep",
+            q: "どうしてそう思ったの？",
+            sub: "気もちにはかならずわけがあります。そのわけを書くと、作文がぐっと深くなります。",
+            starts: ["なぜなら、", "はじめて○○だったから、", "○○してくれたから、", "ずっと○○したかったから、"]
+          },
+          {
+            key: "learn",
+            type: "free",
+            q: "今ふりかえって、どう思う？ つぎにつなげたいことは？",
+            sub: "「楽しかったです」で終わらせないで、自分が気づいたことや、これからしたいことを書こう。"
+          }
+        ],
+        generateText: function(a) {
+          const p1 = fixWhenWhoWhere(a.when_who_where);
+          const p2 = 'いちばん心にのこったのは、' + fixCenter(a.center);
+          const p3 = fixSentenceEnd(a.kuwashiku);
+          const p4 = 'わたしは「' + fixFeel(a.feel) + '」と思いました。';
+          const p5 = fixReason(a.why_feel);
+          const p6 = fixSentenceEnd(a.learn);
+          return `${p1}\n\n${p2}\n${p3}\n\n${p4}\n${p5}\n\n${p6}`;
+        }
+      },
+
+      gyouji: {
+        title: "学校の行事",
+        questions: [
+          {
+            key: "event",
+            type: "fact",
+            q: "何の行事のこと？",
+            sub: "行事の名前と、いつあったかを書こう。",
+            seeds: ["運動会がありました", "えん足に行きました", "学習発表会がありました", "音楽会がありました"]
+          },
+          {
+            key: "center",
+            type: "free",
+            q: "その行事で、いちばん心にのこったことは何？",
+            sub: "がんばったこと、うれしかったこと、くやしかったこと…1つにしぼろう。"
+          },
+          {
+            key: "scene",
+            type: "deep",
+            q: "そのときのようすをくわしく書こう",
+            sub: "どこで、何が起きたか。まわりはどんなようすだったか。",
+            starts: ["そのとき、", "わたしは○○していて、", "まわりでは、", "気がつくと、"]
+          },
+          {
+            key: "feel",
+            type: "feel",
+            q: "そのとき、どんな気もちだった？",
+            sub: "ぴったりの言葉をえらぼう。1つじゃなくて2つ書いてもいいよ。",
+            seeds: ["うれしい", "くやしい", "ドキドキした", "きんちょうした", "ほこらしい", "はずかしい", "なきそう", "じーんとした", "やりきった", "ホッとした"]
+          },
+          {
+            key: "why_feel",
+            type: "deep",
+            q: "どうしてそう感じたんだろう？",
+            sub: "自分の心の中をのぞいてみよう。",
+            starts: ["なぜなら、", "ずっと○○してきたから、", "みんなが○○してくれたから、", "はじめての○○で、"]
+          },
+          {
+            key: "learn",
+            type: "free",
+            q: "この行事を通して、気づいたことや学んだことは？",
+            sub: "「楽しかった」だけでなく、自分がどう成長したか、何を考えたかを書こう。"
+          }
+        ],
+        generateText: function(a) {
+          const p1 = fixSentenceEnd(a.event);
+          const p2 = 'わたしがいちばん心にのこったのは、' + fixCenter(a.center);
+          const p3 = fixSentenceEnd(a.scene);
+          const p4 = 'そのとき、わたしは「' + fixFeel(a.feel) + '」と感じました。';
+          const p5 = fixReason(a.why_feel);
+          const p6 = 'この行事で、' + fixSentenceEnd(a.learn);
+          return `${p1}\n\n${p2}\n${p3}\n\n${p4}\n${p5}\n\n${p6}`;
+        }
+      },
+
+      dokusho: {
+        title: "読書感想文",
+        questions: [
+          {
+            key: "book_why",
+            type: "deep",
+            q: "どの本を読みましたか？ なぜその本をえらんだ？",
+            sub: "本の題名と、えらんだわけを書こう。",
+            starts: ["わたしは「○○」を読みました。", "この本をえらんだのは、", "前から○○がすきで、", "表紙の絵に引きつけられて、"]
+          },
+          {
+            key: "story",
+            type: "free",
+            q: "どんなお話？ 短くまとめてみよう",
+            sub: "全部書かないで、3〜4文くらいでまとめよう。"
+          },
+          {
+            key: "scene",
+            type: "free",
+            q: "心にのこった場面はどこ？",
+            sub: "「いちばんすきな場面」じゃなくて、「心がうごいた場面」をえらぼう。"
+          },
+          {
+            key: "feel",
+            type: "feel",
+            q: "その場面を読んで、どんな気もちになった？",
+            sub: "登場人物の気もちと、自分の気もちの両方を考えてみよう。",
+            seeds: ["かなしい", "うれしい", "くやしい", "おどろいた", "考えさせられた", "むねがいたんだ", "うらやましい", "勇気をもらった", "あたたかい気もち"]
+          },
+          {
+            key: "why_feel",
+            type: "deep",
+            q: "どうしてそう感じたの？",
+            sub: "自分のけいけんとくらべてみるといいよ。",
+            starts: ["なぜなら、", "わたしも前に○○したことがあって、", "わたしだったら○○できないから、", "○○の気もちが分かる気がして、"]
+          },
+          {
+            key: "ifme",
+            type: "deep",
+            q: "もし自分が主人公だったら、どうする？",
+            sub: "ただ「同じことをします」じゃなくて、自分らしいこたえを考えよう。",
+            starts: ["わたしだったら、", "もしわたしが主人公だったら、", "わたしには○○できないけれど、", "わたしも同じように、"]
+          },
+          {
+            key: "learn",
+            type: "free",
+            q: "この本を読んで、考えたこと・学んだことは？",
+            sub: "「おもしろかった」で終わらせないで、自分の生活につなげて考えてみよう。"
+          }
+        ],
+        generateText: function(a) {
+          const p1 = fixSentenceEnd(a.book_why);
+          const p2 = 'この本は、' + fixSentenceEnd(a.story);
+          const p3 = 'わたしの心にのこったのは、' + fixCenter(a.scene);
+          const p4 = 'この場面を読んで、わたしは「' + fixFeel(a.feel) + '」という気もちになりました。';
+          const p5 = fixReason(a.why_feel);
+          const p6 = fixSentenceEnd(a.ifme);
+          const p7 = 'この本を読んで、' + fixSentenceEnd(a.learn);
+          return `${p1}\n\n${p2}\n\n${p3}\n${p4}${p5}\n\n${p6}\n\n${p7}`;
+        }
+      }
+    };
+
+    let currentThemeKey = '';
+    let currentQuestions = [];
+    let currentStep = 0;
+    let answers = {};
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(el => {
+        el.classList.remove('active');
+        setTimeout(() => el.style.display = 'none', 500); 
+      });
+
+      const target = document.getElementById(screenId);
+      setTimeout(() => {
+        target.style.display = 'block';
+        void target.offsetWidth;
+        target.classList.add('active');
+      }, 500);
+    }
+
+    function showThemeScreen() {
+      showScreen('screen-theme');
+    }
+
+    function selectTheme(themeKey) {
+      currentThemeKey = themeKey;
+      currentQuestions = themeData[themeKey].questions;
+      currentStep = 0;
+      answers = {};
+      document.getElementById('progress-container').style.display = 'block';
+      updateQuestionUI();
+      showScreen('screen-question');
+    }
+
+    function updateQuestionUI() {
+      const qData = currentQuestions[currentStep];
+      
+      // 質問文と補足説明
+      document.getElementById('question-text').innerText = qData.q;
+      
+      const subContainer = document.getElementById('sub-text-container');
+      subContainer.innerHTML = '';
+      if (qData.sub) {
+        const subDiv = document.createElement('div');
+        subDiv.className = 'sub-text';
+        subDiv.innerText = qData.sub;
+        subContainer.appendChild(subDiv);
+      }
+
+      // 「言葉のたね」セクション（短いキーワード）
+      const seedSection = document.getElementById('seed-section');
+      const seedContainer = document.getElementById('seed-container');
+      seedContainer.innerHTML = '';
+      
+      if (qData.seeds && qData.seeds.length > 0) {
+        seedSection.style.display = 'block';
+        qData.seeds.forEach(seed => {
+          const btn = document.createElement('button');
+          btn.className = 'seed-btn';
+          btn.innerText = seed;
+          btn.onclick = () => {
+            // 言葉のたねは「追加」する（上書きしない）
+            const inputEl = document.getElementById('answer-input');
+            if (inputEl.value.trim() === '') {
+              inputEl.value = seed;
+            } else {
+              inputEl.value = inputEl.value + '・' + seed;
+            }
+            inputEl.focus();
+          };
+          seedContainer.appendChild(btn);
+        });
+      } else {
+        seedSection.style.display = 'none';
+      }
+
+      // 「書き出しのヒント」セクション
+      const startSection = document.getElementById('start-section');
+      const startContainer = document.getElementById('start-container');
+      startContainer.innerHTML = '';
+      
+      if (qData.starts && qData.starts.length > 0) {
+        startSection.style.display = 'block';
+        qData.starts.forEach(start => {
+          const btn = document.createElement('button');
+          btn.className = 'start-btn';
+          btn.innerText = start;
+          btn.onclick = () => {
+            // 書き出しは入力欄にうつして、続きを書かせる
+            const inputEl = document.getElementById('answer-input');
+            inputEl.value = start;
+            inputEl.focus();
+            // カーソルを末尾に
+            inputEl.setSelectionRange(start.length, start.length);
+          };
+          startContainer.appendChild(btn);
+        });
+      } else {
+        startSection.style.display = 'none';
+      }
+      
+      const inputEl = document.getElementById('answer-input');
+      inputEl.value = answers[qData.key] || "";
+      inputEl.classList.remove('shake');
+      
+      // typeに応じてプレースホルダーを変える
+      if (qData.type === 'free') {
+        inputEl.placeholder = "ヒントはありません。自分の言葉で書こう";
+      } else if (qData.type === 'feel') {
+        inputEl.placeholder = "言葉のたねを使ったり、自分の言葉で書こう";
+      } else if (qData.type === 'deep') {
+        inputEl.placeholder = "書き出しのつづきを自分で考えよう";
+      } else {
+        inputEl.placeholder = "ここに書いてね";
+      }
+      
+      setTimeout(() => inputEl.focus(), 600);
+
+      const backBtn = document.getElementById('back-button');
+      backBtn.style.display = (currentStep === 0) ? 'none' : 'inline-block';
+
+      const progress = (currentStep / currentQuestions.length) * 100;
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+    }
+
+    function prevQuestion() {
+      if (currentStep > 0) {
+        const inputEl = document.getElementById('answer-input');
+        answers[currentQuestions[currentStep].key] = inputEl.value.trim();
+
+        currentStep--;
+        const questionScreen = document.getElementById('screen-question');
+        questionScreen.style.opacity = 0;
+        setTimeout(() => {
+          updateQuestionUI();
+          questionScreen.style.opacity = 1;
+        }, 300);
+      }
+    }
+
+    function nextQuestion() {
+      const inputEl = document.getElementById('answer-input');
+      const text = inputEl.value.trim();
+
+      if (text === "") {
+        soundError.currentTime = 0;
+        soundError.play().catch(e => console.log("Audio play prevented", e));
+        inputEl.classList.remove('shake');
+        void inputEl.offsetWidth;
+        inputEl.classList.add('shake');
+        return;
+      }
+
+      answers[currentQuestions[currentStep].key] = text;
+      currentStep++;
+
+      if (currentStep < currentQuestions.length) {
+        const questionScreen = document.getElementById('screen-question');
+        questionScreen.style.opacity = 0;
+        setTimeout(() => {
+          updateQuestionUI();
+          questionScreen.style.opacity = 1;
+        }, 300);
+      } else {
+        showResult();
+      }
+    }
+
+    document.getElementById('answer-input').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        nextQuestion();
+      }
+    });
+
+    function showResult() {
+      document.getElementById('progress-bar').style.width = '100%';
+      const text = themeData[currentThemeKey].generateText(answers);
+      document.getElementById('result-text').value = text;
+      showScreen('screen-result');
+
+      setTimeout(() => {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#ff9a9e', '#fecfef', '#a1c4fd', '#c2e9fb']
+        });
+      }, 600);
+    }
+
+    function copyText() {
+      const resultText = document.getElementById('result-text');
+      resultText.select();
+      resultText.setSelectionRange(0, 99999);
+
+      try {
+        document.execCommand('copy');
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "コピーしました！";
+        btn.style.background = "#8bc34a";
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.background = "";
+        }, 2000);
+        
+        soundCorrect.currentTime = 0;
+        soundCorrect.play().catch(e => console.log(e));
+      } catch (err) {
+        alert("コピーに失敗しました。テキストを選たくして手動でコピーしてください。");
+      }
+    }
+
+    function resetApp() {
+      document.getElementById('progress-container').style.display = 'none';
+      document.getElementById('progress-bar').style.width = '0%';
+      showScreen('screen-start');
+    }
+  </script>
+</body>
+</html>
